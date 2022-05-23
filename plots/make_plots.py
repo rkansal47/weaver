@@ -1,5 +1,5 @@
 """
-Takes the skimmed parquet files (output of bbVVSkimmer) and evaluates the HWW Tagger.
+Takes inferenced root files (output of weaver inference) and evaluates the tagger.
 
 Author(s): Raghav Kansal
 """
@@ -10,24 +10,42 @@ import mplhep as hep
 import uproot
 import awkward as ak
 import os
+import argparse
 
 plt.rcParams.update({"font.size": 16})
 plt.style.use(hep.style.CMS)
 hep.style.use("CMS")
 
-INFERENCES_DIR = "../../inferences/04_18_ak8_qcd_oneweight"
-plot_dir = "../../plots/04_18_ak8_qcd_oneweight"
-os.system(f"mkdir -p {plot_dir}")
+
+# for local testing
+args = type("test", (object,), {})()
+args.inferences_dir = "../../inferences/04_18_ak8_qcd_oneweight"
+args.plot_dir = "../../plots/05_23_testing"
+args.sample_files = ["qcd", "HHbbVV"]
+args.sample_names = ["QCD", "HHbbVV"]
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--inferences-dir", type=str, help="directory containing inferenced root files")
+parser.add_argument("--sample-files", nargs="+", type=str, help="root file names of samples")
+parser.add_argument("--sample-names", nargs="+", type=str, help="sample labels")
+parser.add_argument("--plot-dir", required=True, help="output dir")
+args = parser.parse_args()
+
+
+os.system(f"mkdir -p {args.plot_dir}")
 
 
 ##############################################
 # Load samples, compute scores
 ##############################################
 
-samples = {"qcd": "QCD", "HHbbVV": "HHbbVV", "bulkg_hflat": "BulkGToHHFlatMass"}
+assert len(args.sample_files) == len(args.sample_names), "# sample files should = # sample names"
+samples = {args.sample_files[i]: args.sample_names[i] for i in range(len(args.sample_files))}
 
 events_dict = {
-    sample: uproot.open(f"{INFERENCES_DIR}/{sample}.root:Events").arrays() for sample in samples
+    sample: uproot.open(f"{args.inferences_dir}/{sample}.root:Events").arrays()
+    for sample in samples
 }
 
 qcd_classes = ["QCDb", "QCDbb", "QCDc", "QCDcc", "QCDothers"]
@@ -37,6 +55,12 @@ for sample, events in events_dict.items():
     events["score_fj_qcdall"] = np.sum(
         [events[f"score_fj_is{subclass}"] for subclass in qcd_classes], axis=0
     )
+
+    for subclass in sig_classes:
+        events[f"score_fj_T{subclass}"] = events[f"score_fj_{subclass}"] / (
+            events[f"score_fj_{subclass}"] + events["score_fj_qcdall"]
+        )
+
     events["score_fj_sigall"] = np.sum(
         [events[f"score_fj_{subclass}"] for subclass in sig_classes], axis=0
     )
@@ -44,11 +68,14 @@ for sample, events in events_dict.items():
     events["score_fj_THVV4q"] = events["score_fj_sigall"] / (
         events["score_fj_sigall"] + events["score_fj_qcdall"]
     )
+
     events["weight"] = np.ones(len(events))
 
-np.sum(events_dict["HHbbVV"]["fj_H_VV_4q_3q"])
-np.sum(events_dict["HHbbVV"]["fj_H_VV_4q_4q"])
 
+num_3q = np.sum(events_dict["HHbbVV"]["fj_H_VV_4q_3q"])
+num_4q = np.sum(events_dict["HHbbVV"]["fj_H_VV_4q_4q"])
+print(f"# of 3q signal events: {num_3q}")
+print(f"# of 4q signal events: {num_4q}")
 
 ##############################################
 # Weight QCD to be exponentially falling by pT
@@ -60,7 +87,7 @@ from hist import Hist
 reweight_bins = [120, 300, 1500]
 bin_centers = np.linspace(reweight_bins[1], reweight_bins[2], reweight_bins[0] + 1)[:-1]
 bin_centers += (bin_centers[1] - bin_centers[0]) / 2
-# qcd pt 1/e range is roughly ~80 GeV
+# qcd pt 1/e range is roughly ~100 GeV
 exp_falling_weights = np.exp((reweight_bins[1] - bin_centers) / 100)
 
 qcd_pt = (Hist.new.Reg(*reweight_bins, name="pt").Double()).fill(
@@ -72,12 +99,14 @@ pt_weights_lookup = dense_lookup(pt_weights, qcd_pt.axes.edges)
 
 events_dict["qcd"]["weight"] = pt_weights_lookup(events_dict["qcd"]["fj_pt"])
 
-_ = plt.hist(
-    events_dict["qcd"]["fj_pt"],
-    np.linspace(300, 1000, 101),
-    weights=events_dict["qcd"]["weight"],
-    histtype="step",
-)
+# Checking QCD distribution
+
+# _ = plt.hist(
+#     events_dict["qcd"]["fj_pt"],
+#     np.linspace(300, 1000, 101),
+#     weights=events_dict["qcd"]["weight"],
+#     histtype="step",
+# )
 
 ##############################################
 # Cuts
@@ -101,7 +130,7 @@ msd_key = "msoftdrop"
 all_cuts = [
     {pt_key: [300, 1500], msd_key: [20, 320]},
     {pt_key: [400, 600], msd_key: [60, 150]},
-    {pt_key: [300, 1500], msd_key: [110, 140]},
+    # {pt_key: [300, 1500], msd_key: [110, 140]},
 ]
 
 var_labels = {pt_key: "pT", msd_key: "mSD"}
@@ -129,27 +158,28 @@ for sample, events in events_dict.items():
         if cutstr not in cut_labels:
             cut_labels[cutstr] = " ".join(cutlabel)
 
+for cutstr in cut_labels:
+    os.system(f"mkdir -p {args.plot_dir}/{cutstr}")
+
 
 ##############################################
 # Histograms
 ##############################################
 
-plot_vars = {
+hist_plot_vars = {
     "th4q": {
         "title": "Non-MD Th4q",
         "score_label": "fj_PN_H4qvsQCD",
-        "colour": "orange",
     },
     "thvv4q": {
         "title": "MD THVV4q",
         "score_label": "score_fj_THVV4q",
-        "colour": "green",
     },
 }
 
 hists = {}
 
-for t, pvars in plot_vars.items():
+for t, pvars in hist_plot_vars.items():
     hists[t] = {}
     for cutstr in cut_labels:
         hists[t][cutstr] = {}
@@ -180,19 +210,45 @@ for t, pvars in plot_vars.items():
         plt.xlabel(f"PNet {pvars['title']} score")
         plt.legend()
         plt.savefig(
-            f"{plot_dir}/{t}_hist_{cutstr}.pdf",
+            f"{args.plot_dir}/{cutstr}/{t}_hist_{cutstr}.pdf",
             bbox_inches="tight",
         )
 
-import pickle
-
-with open(f"{plot_dir}/hists.pkl", "wb") as f:
-    pickle.dump(hists, f)
+# import pickle
+#
+# with open(f"{args.plot_dir}/hists.pkl", "wb") as f:
+#     pickle.dump(hists, f)
 
 
 ##############################################
 # ROCs
 ##############################################
+
+roc_plot_vars = {
+    "th4q": {
+        "title": "Non-MD Th4q",
+        "score_label": "fj_PN_H4qvsQCD",
+        "colour": "orange",
+    },
+    "thvv4q": {
+        "title": "MD THVV4q",
+        "score_label": "score_fj_THVV4q",
+        "colour": "green",
+    },
+    "pnet4q": {
+        "title": "MD 4q only",
+        "score_label": "score_fj_TH_VV_4q_4q",
+        "colour": "red",
+        "sig_selector": "fj_H_VV_4q_4q",
+    },
+    "pnet3q": {
+        "title": "MD 3q only",
+        "score_label": "score_fj_TH_VV_4q_3q",
+        "colour": "blue",
+        "sig_selector": "fj_H_VV_4q_3q",
+    },
+}
+
 
 from sklearn.metrics import roc_curve, auc
 
@@ -203,21 +259,24 @@ bg_key = "qcd"
 for cutstr in cut_labels:
     rocs[cutstr] = {}
 
-    sig_cut = cuts_dict[sig_key][cutstr]
-    bg_cut = cuts_dict[bg_key][cutstr]
+    for t, pvars in roc_plot_vars.items():
+        sig_cut = cuts_dict[sig_key][cutstr]
+        bg_cut = cuts_dict[bg_key][cutstr]
 
-    y_true = np.concatenate(
-        [
-            np.ones(np.sum(sig_cut)),
-            np.zeros(np.sum(bg_cut)),
-        ]
-    )
+        if "sig_selector" in pvars:
+            sig_cut = sig_cut * events_dict[sig_key][pvars["sig_selector"]]
 
-    weights = np.concatenate(
-        (events_dict[sig_key]["weight"][sig_cut], events_dict[bg_key]["weight"][bg_cut])
-    )
+        y_true = np.concatenate(
+            [
+                np.ones(np.sum(sig_cut)),
+                np.zeros(np.sum(bg_cut)),
+            ]
+        )
 
-    for t, pvars in plot_vars.items():
+        weights = np.concatenate(
+            (events_dict[sig_key]["weight"][sig_cut], events_dict[bg_key]["weight"][bg_cut])
+        )
+
         score_label = pvars["score_label"]
         scores = np.concatenate(
             (
@@ -234,7 +293,7 @@ ylim = [1e-6, 1]
 
 for cutstr in cut_labels:
     plt.figure(figsize=(12, 12))
-    for t, pvars in plot_vars.items():
+    for t, pvars in roc_plot_vars.items():
         plt.plot(
             rocs[cutstr][t]["tpr"],
             rocs[cutstr][t]["fpr"],
@@ -258,4 +317,4 @@ for cutstr in cut_labels:
     plt.xlim(*xlim)
     plt.ylim(*ylim)
     plt.legend()
-    plt.savefig(f"{plot_dir}/roccurve_{cutstr}.pdf", bbox_inches="tight")
+    plt.savefig(f"{args.plot_dir}/{cutstr}/roccurve_{cutstr}.pdf", bbox_inches="tight")
