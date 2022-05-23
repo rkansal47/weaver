@@ -149,6 +149,14 @@ def plot_roc(
                 break
         return x_eff
 
+    def get_x_intersections(x_effs, y_effs, to_get=0.01):
+        y_eff = 0
+        for i, f in enumerate(x_effs):
+            if f >= to_get:
+                y_eff = y_effs[i]
+                break
+        return y_eff
+    
     # draw intersections at 1% mis-tag rate
     ik = 0
     markers = ["v", "^", "o", "s", "p", "P", "h"]
@@ -174,6 +182,14 @@ def plot_roc(
         axs.vlines(
             x=x_eff, ymin=0.00001, ymax=y_eff, linewidth=1.3, color="dimgrey", linestyle="dashed"
         )
+        if x_eff < 0.45:
+            y_eff_2 = get_x_intersections(tp, fp, 0.45)
+            axs.hlines(
+                y=y_eff_2,  xmin=0.00001, xmax=0.99999, linewidth=1.3, color="dimgrey", linestyle="dashed"
+            )
+            axs.vlines(
+                x=0.45, ymin=0.00001, ymax=y_eff_2, linewidth=1.3, color="dimgrey", linestyle="dashed"
+            )
         ik += 1
 
     axs.legend(loc="lower right", fontsize=25)

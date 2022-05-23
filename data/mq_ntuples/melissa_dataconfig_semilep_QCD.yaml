@@ -1,4 +1,4 @@
-# Samples: 4q
+# Samples: 1lep
 # reweight_method: ref
 
 treename:
@@ -8,72 +8,45 @@ selection:
     ### use `&`, `|`, `~` for logical operations on numpy arrays
     ### can use functions from `math`, `np` (numpy), and `awkward` in the expression
     >
-    (fj_pt>300) &
+    np.squeeze((fj_pt>300) &
     (fj_pt<2500) &
-    (np.absolute(fj_eta) < 2.4) &
+    (np.absolute(fj_eta)<2.4) &
     (fj_msoftdrop>=30) &
     (fj_msoftdrop<320) &
-    (
-      (
-        (
-          (fj_isQCDb == 1) |
-          (fj_isQCDbb == 1) |
-          (fj_isQCDc == 1) |
-          (fj_isQCDcc == 1) |
-          # (fj_isQCDlep == 1) |
-          (fj_isQCDothers == True)
-        ) &
-        (fj_genRes_mass <= 0)
-      ) |
-      (
-        (fj_H_VV_4q == 1) &
-        # (fj_maxdR_HVV_daus<2.5) &
-        (fj_nprongs > 1) &
-        # (fj_genV_mass > 60) &
-        # (fj_genVstar_mass < 60) &
-        (fj_genRes_mass > 0)
-      ) |
-      (
-        (fj_Top_2q==1) |
-        (fj_Top_elenu==1)|
-        (fj_Top_munu==1) |
-        (fj_Top_taunu==1)
-      ) |
-      (
-        (fj_W_2q==1) |
-        (fj_W_elenu==1) |
-        (fj_W_munu==1) |
-        (fj_W_taunu==1)
-      )
-    )
+    ( ( ( (fj_isQCDb==1) |
+          (fj_isQCDbb==1) |
+          (fj_isQCDc==1) |
+          (fj_isQCDcc==1) |
+          (fj_isQCDothers == True) ) &
+        (fj_genRes_mass<=0) ) |
+        ( (fj_W_2q==1) |
+          (fj_W_elenu==1) |
+          (fj_W_munu==1) |
+          (fj_W_taunu==1) ) |
+        ( (fj_Top_2q==1) |
+          (fj_Top_elenu==1) |
+          (fj_Top_munu==1) |
+          (fj_Top_taunu==1) ) |
+      ( ((fj_H_VV_elenuqq==1) | (fj_H_VV_munuqq==1) | (fj_H_VV_taunuqq==1)) &
+        (fj_nprongs>1) &
+        (fj_genRes_mass>0) ) ))
 
 new_variables:
     ### [format] name: formula
     ### can use functions from `math`, `np` (numpy), and `awkward` in the expression
     target_mass: np.maximum(1, np.where(fj_genRes_mass>0, fj_genRes_mass, fj_msoftdrop))
-    # Background (Top)
-    # fj_isTop_merged: (fj_isTop==1) & (fj_nprongs==3)
-    # fj_isTop_semimerged: (fj_isTop==1) & (fj_nprongs==2)
-    # fj_isToplep_merged: (fj_isToplep==1) & (fj_nprongs>=2)  # so that you have at least the lepton and the b merged in the leptonic case
-    ##fj_QCD_label: (fj_isQCDb==1) | (fj_isQCDbb==1) | (fj_isQCDc==1) | (fj_isQCDcc==1) | (fj_isQCDothers==1)
-    fj_ttbar_bmerged: (fj_Top_bmerged==1) & ((fj_Top_2q==1) | (fj_Top_elenu==1) | (fj_Top_munu==1) | (fj_Top_taunu==1))
-    fj_ttbar_bsplit: (fj_Top_bmerged!=1) & ((fj_Top_2q==1) | (fj_Top_elenu==1) | (fj_Top_munu==1) | (fj_Top_taunu==1))
-    fj_wjets_label: ((fj_W_2q==1) | (fj_W_elenu==1) | (fj_W_munu==1) | (fj_W_taunu==1))
-    fj_QCD_label: ((fj_wjets_label==1) | (fj_ttbar_bsplit==1) | (fj_ttbar_bmerged==1))
+    fj_QCD_label: (fj_isQCDb==1) | (fj_isQCDbb==1) | (fj_isQCDc==1) | (fj_isQCDcc==1) | (fj_isQCDothers==1)
     # Signal (HVV)
     fj_isHVV_elenuqq_merged: (fj_H_VV_elenuqq==1) & (fj_nprongs==4)
     fj_isHVV_elenuqq_semimerged: (fj_H_VV_elenuqq==1) & (fj_nprongs==3)
     fj_isHVV_munuqq_merged: (fj_H_VV_munuqq==1) & (fj_nprongs==4)
     fj_isHVV_munuqq_semimerged: (fj_H_VV_munuqq==1) & (fj_nprongs==3)
-    # fj_isHVV_mutaunuqq_merged: (fj_H_VV_mutaunuqq==1) & (fj_nprongs==4)
-    # fj_isHVV_mutaunuqq_semimerged: (fj_H_VV_mutaunuqq==1) & (fj_nprongs==3)
-    # fj_isHVV_eletaunuqq_merged: (fj_H_VV_eletaunuqq==1) & (fj_nprongs==4)
-    # fj_isHVV_eletaunuqq_semimerged: (fj_H_VV_eletaunuqq==1) & (fj_nprongs==3)
-    # fj_isHVV_hadtaunuqq_merged: (fj_H_VV_hadtaunuqq==1) & (fj_nprongs==4)
-    # fj_isHVV_hadtaunuqq_semimerged: (fj_H_VV_hadtaunuqq==1) & (fj_nprongs==3)
-    fj_H_VV_4q_3q: (fj_H_VV_4q==1) & (fj_nprongs==3)
-    fj_H_VV_4q_4q: (fj_H_VV_4q==1) & (fj_nprongs==4)
-
+    fj_isHVV_taunuqq_merged: (fj_H_VV_taunuqq==1) & (fj_nprongs==4)
+    fj_isHVV_taunuqq_semimerged: (fj_H_VV_taunuqq==1) & (fj_nprongs==3)
+    fj_sig_label: ((fj_H_VV_elenuqq==1) | (fj_H_VV_munuqq==1) | (fj_H_VV_taunuqq==1))
+    fj_isHVV_elenuqq: (fj_H_VV_elenuqq==1)
+    fj_isHVV_munuqq: (fj_H_VV_munuqq==1)
+    fj_isHVV_taunuqq: (fj_H_VV_taunuqq==1)
 
 preprocess:
     ### method: [manual, auto] - whether to use manually specified parameters for variable standardization
@@ -149,10 +122,11 @@ inputs:
 labels:
     ### type can be `simple`, `custom`
     ### [option 1] use `simple` for binary/multi-class classification, then `value` is a list of 0-1 labels
+    #        fj_isHVV_elenuqq, fj_isHVV_munuqq, fj_isHVV_taunuqq
     type: simple
     value: [
-        fj_isQCDb, fj_isQCDbb, fj_isQCDc, fj_isQCDcc, fj_isQCDothers,
-        fj_H_VV_4q_3q, fj_H_VV_4q_4q
+        fj_QCD_label,
+        fj_isHVV_elenuqq_merged, fj_isHVV_elenuqq_semimerged, fj_isHVV_munuqq_merged, fj_isHVV_munuqq_semimerged, fj_isHVV_taunuqq_merged, fj_isHVV_taunuqq_semimerged
     ]
 
 observers:
@@ -169,26 +143,29 @@ observers:
    - fj_subjet2_phi
    - fj_subjet2_mass
    - fj_msoftdrop
-   # - fj_deepTagMD_H4qvsQCD
-   # - fj_deepTag_HvsQCD
    - fj_dR_V
    - fj_dR_Vstar
    - fj_PN_H4qvsQCD
-   # - fj_mindR_HVV_daus
-   # - fj_maxdR_HVV_daus
    - fj_genRes_mass
    - fj_genVstar_mass
    - fj_genV_pt
    - fj_genVstar_pt
-   # - fj_genV_decay
-   # - fj_genVstar_decay
    - fj_nprongs
-   - fj_H_VV_4q
+   - fj_H_VV_elenuqq
+   - fj_H_VV_munuqq
+   - fj_H_VV_taunuqq
+   - fj_isHVV_elenuqq_merged
+   - fj_isHVV_elenuqq_semimerged
+   - fj_isHVV_munuqq_merged
+   - fj_isHVV_munuqq_semimerged
+   - fj_isHVV_taunuqq_merged
+   - fj_isHVV_taunuqq_semimerged
    - target_mass
    - fj_ttbar_bmerged
    - fj_ttbar_bsplit
+   # - fj_QCD_label
+   - fj_ttbar_label
    - fj_wjets_label
-   - fj_QCD_label
 
 weights:
    ### [option 1] use precomputed weights stored in the input files
@@ -201,14 +178,15 @@ weights:
      # log bins as: np.round(np.exp(np.linspace(np.log(MIN), np.log(MAX), NUM_BINS))).astype('int').tolist()
       fj_pt: [300, 359, 429, 513, 613, 734, 877, 1049, 1254, 1500]
       target_mass: [30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260]
-   reweight_classes:
+   # # fj_isHVV_elenuqq_merged, fj_isHVV_elenuqq_semimerged, fj_isHVV_munuqq_merged, fj_isHVV_munuqq_semimerged, fj_isHVV_taunuqq_merged, fj_isHVV_taunuqq_semimerged    # 0.27, 0.05, 0.29, 0.05, 0.30, 0.04
+   reweight_classes: 
        [
-       fj_QCD_label,
-       fj_H_VV_4q_3q, fj_H_VV_4q_4q,
+        fj_QCD_label,
+        fj_sig_label
        ]
    class_weights:
        [
-       1.0,
-       0.5, 0.5,
+        1.0,
+        1.0
        ]
    reweight_hists:
