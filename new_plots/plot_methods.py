@@ -106,7 +106,7 @@ def make_cuts(events_dict: Dict[str, ak.Array], cuts_list: List[Dict], var_label
             cuts = []
             for cutvar, (cutmin, cutmax) in cutvars.items():
                 cutstrs.append(f"{cutvar}_{cutmin}_{cutmax}")
-                cutlabel.append(f"{var_labels[cutvar]}: [{cutmin}, {cutmax}]")
+                cutlabel.append(f"{var_labels[cutvar]}: [{cutmin}, {cutmax}] GeV")
                 cuts.append(events[f"fj_{cutvar}"] >= cutmin)
                 cuts.append(events[f"fj_{cutvar}"] < cutmax)
 

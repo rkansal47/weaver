@@ -26,7 +26,7 @@ from plot_methods import (
 # for local interactive testing
 args = type("test", (object,), {})()
 args.inferences_dir = "../../inferences/04_18_ak8_qcd_oneweight"
-args.plot_dir = "../../plots/05_23_testing"
+args.plot_dir = "../../plots/06_28_javier_plots"
 args.sample_files = ["qcd", "HHbbVV"]
 args.sample_names = ["QCD", "HHbbVV"]
 
@@ -34,8 +34,16 @@ args.sample_names = ["QCD", "HHbbVV"]
 # from command line args
 parser = argparse.ArgumentParser()
 parser.add_argument("--inferences-dir", type=str, help="directory containing inferenced root files")
-parser.add_argument("--sample-files", nargs="+", type=str, help="root file names of samples")
-parser.add_argument("--sample-names", nargs="+", type=str, help="sample labels")
+parser.add_argument(
+    "--sample-files",
+    nargs="+",
+    type=str,
+    help="root file names of samples",
+    default=["qcd", "HHbbVV"],
+)
+parser.add_argument(
+    "--sample-names", nargs="+", type=str, help="sample labels", default=["QCD", "HHbbVV"]
+)
 parser.add_argument("--plot-dir", required=True, help="output dir")
 args = parser.parse_args()
 
@@ -65,7 +73,7 @@ cuts_list = [
     # {pt_key: [300, 1500], msd_key: [110, 140]},
 ]
 
-var_labels = {pt_key: "pT", msd_key: "mSD"}
+var_labels = {pt_key: "$p_T$", msd_key: "$m_{SD}$"}
 
 # hist vars
 # "file tag": {"title": plot title, "score_label": scores to plot}
@@ -83,12 +91,12 @@ hist_plot_vars = {
 # roc vars
 roc_plot_vars = {
     "th4q": {
-        "title": "Non-MD Th4q",
+        "title": r"$H\to 4q$ Non-MD GNN tagger",
         "score_label": "fj_PN_H4qvsQCD",
         "colour": "orange",
     },
     "thvv4q": {
-        "title": "MD THVV4q",
+        "title": r"$H\to VV\to 4q$ MD GNN tagger",
         "score_label": "score_fj_THVV4q",
         "colour": "green",
     },
