@@ -58,8 +58,8 @@ sum_scores = {
 }
 
 T_scores = {
-    "4q_4q": ("H_VV_4q_4q", "qcdall"),
-    "4q_3q": ("H_VV_4q_3q", "qcdall"),
+    "H_VV_4q_4q": ("H_VV_4q_4q", "qcdall"),
+    "H_VV_4q_3q": ("H_VV_4q_3q", "qcdall"),
     "HVV4q": ("sigall", "qcdall"),
 }
 
