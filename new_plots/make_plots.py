@@ -23,6 +23,20 @@ from plot_methods import (
 )
 
 
+def add_bool_arg(parser, name, help, default=False, no_name=None):
+    """Add a boolean command line argument for argparse"""
+    varname = "_".join(name.split("-"))  # change hyphens to underscores
+    group = parser.add_mutually_exclusive_group(required=False)
+    group.add_argument("--" + name, dest=varname, action="store_true", help=help)
+    if no_name is None:
+        no_name = "no-" + name
+        no_help = "don't " + help
+    else:
+        no_help = help
+    group.add_argument("--" + no_name, dest=varname, action="store_false", help=no_help)
+    parser.set_defaults(**{varname: default})
+
+
 # for local interactive testing
 args = type("test", (object,), {})()
 args.inferences_dir = "../../inferences/04_18_ak8_qcd_oneweight"
@@ -45,6 +59,7 @@ parser.add_argument(
     "--sample-names", nargs="+", type=str, help="sample labels", default=["QCD", "HHbbVV"]
 )
 parser.add_argument("--plot-dir", required=True, help="output dir")
+add_bool_arg(parser, "ph4q", default="True", help="plot old non-MD tagger as well")
 args = parser.parse_args()
 
 
@@ -113,6 +128,9 @@ roc_plot_vars = {
         "sig_selector": "fj_H_VV_4q_3q",
     },
 }
+
+if not args.ph4q:
+    del roc_plot_vars["th4q"]
 
 
 # create sample dict
