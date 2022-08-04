@@ -289,7 +289,7 @@ class ParticleNetPyG(nn.Module):
     ):
         super(ParticleNetPyG, self).__init__(**kwargs)
 
-        self.use_fc2 == len(fc2_params) > 0
+        self.use_fc2 = len(fc2_params) > 0
         self.use_fts_bn = use_fts_bn
         self.bn_fts = nn.BatchNorm1d(input_dims)
 
