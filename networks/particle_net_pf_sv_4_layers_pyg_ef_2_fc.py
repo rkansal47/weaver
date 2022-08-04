@@ -1,6 +1,6 @@
 import torch
 from utils.nn.model.ParticleNetPyG import ParticleNetTaggerPyG
-from utils.nn.model.ParticleNetPyGDAJittable import ParticleNetTaggerPyGJittable
+from utils.nn.model.ParticleNetPyGJittable import ParticleNetTaggerPyGJittable
 
 
 def get_model(data_config, jittable=False, **kwargs):
