@@ -325,15 +325,6 @@ class ParticleNetPyG(nn.Module):
             else:
                 in_chn = fc_params[idx - 1][0]
 
-            if self.for_segmentation:
-                fcs.append(
-                    nn.Sequential(
-                        nn.Conv1d(in_chn, channels, kernel_size=1, bias=False),
-                        nn.BatchNorm1d(channels),
-                        nn.ReLU(),
-                        nn.Dropout(drop_rate),
-                    )
-                )
             else:
                 fcs.append(
                     nn.Sequential(nn.Linear(in_chn, channels), nn.ReLU(), nn.Dropout(drop_rate))

@@ -10,8 +10,8 @@ def get_model(data_config, jittable=False, **kwargs):
         (16, (256, 256, 256)),
         (16, (256, 256, 256)),
     ]
-    fc1_params = [(128, 0.1)]
-    fc2_params = [(128, 0.1)]
+    fc1_params = [(256, 0.1)]
+    fc2_params = []
     use_fusion = True
 
     pf_features_dims = len(data_config.input_dicts["pf_features"])

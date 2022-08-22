@@ -269,8 +269,7 @@ class ParticleNetPyG(nn.Module):
         input_dims: int,
         num_classes: int,
         conv_params: list = [(7, (32, 32, 32)), (7, (64, 64, 64))],
-        fc1_params: list = [(128, 0.1)],
-        fc2_params: list = None,
+        fc_params: list = [(128, 0.1)],
         use_fusion: bool = True,
         use_fts_bn: bool = True,
         use_counts: bool = True,
@@ -514,7 +513,7 @@ class ParticleNetTaggerPyG(nn.Module):
         sv_m = (sv_features[:, 1] / 0.3) + 1.2
         sv_abseta = (sv_features[:, 4] / 1.6) + 0.5
         sv_p = sv_pt * torch.cosh(sv_abseta)
-        sv_e = torch.sqrt((sv_m**2) + (sv_p**2))
+        sv_e = torch.sqrt((sv_m ** 2) + (sv_p ** 2))
         sv_pee = torch.stack((sv_pt, sv_e, sv_abseta), dim=1)
         sv_pee *= sv_mask
 
